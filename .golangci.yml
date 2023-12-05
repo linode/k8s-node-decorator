@@ -1,0 +1,24 @@
+linters:
+  enable:
+    - gofmt
+    - goimports
+    - structcheck
+    - varcheck
+    - staticcheck
+    - unconvert
+    - revive
+    - ineffassign
+    - vet
+    - unused
+    - misspell
+  disable:
+    - errcheck
+
+run:
+  tests: false
+  timeout: 8m
+  skip-dirs:
+    - api
+    - design
+    - docs
+    - docs/man
