@@ -17,8 +17,3 @@ linters:
 run:
   tests: false
   timeout: 8m
-  skip-dirs:
-    - api
-    - design
-    - docs
-    - docs/man
