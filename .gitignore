@@ -1,4 +1,4 @@
 .idea/
 .vscode/
 
-k8s-node-decorator
+bin/

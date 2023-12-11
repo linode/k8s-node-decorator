@@ -13,7 +13,7 @@ lint:
 
 .PHONY: build
 build:
-	go build -o k8s-node-decorator -a -ldflags '-X main.version='${VERSION}' -extldflags "-static"' ./main.go
+	go build -o ./bin/k8s-node-decorator -a -ldflags '-X main.version='${VERSION}' -extldflags "-static"' ./main.go
 
 .PHONY: docker-build
 docker-build:
