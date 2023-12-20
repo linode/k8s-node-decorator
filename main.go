@@ -48,38 +48,21 @@ func UpdateNodeLabels(node *corev1.Node, instanceData metadata.InstanceData) {
 	node.Labels["linode_host"] = instanceData.HostUUID
 }
 
-func main() {
-	pollingIntervalSeconds := flag.Int("poll-interval", 60, "The interval (in seconds) to poll and update node information")
-	flag.Parse()
-
-	interval := time.Duration(*pollingIntervalSeconds) * time.Second
-
-	klog.Infof("Starting Linode Kubernetes Node Decorator: version %s", version)
-	klog.Infof("The poll interval is set to %v seconds", interval)
-
+func GetClientset() (*kubernetes.Clientset, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
 
-	node, err := GetCurrentNode(*clientset)
-	if err != nil {
-		panic(err.Error())
-	}
+	return clientset, nil
+}
 
-	client, err := metadata.NewClient(
-		context.Background(),
-		metadata.ClientWithManagedToken(),
-	)
-	if err != nil {
-		panic(err)
-	}
-
+func StartWatcher(client metadata.Client, node *corev1.Node, interval time.Duration) {
 	instanceData, err := client.GetInstance(context.Background())
 	if err != nil {
 		klog.Errorf("Failed to get the initial instance data: %s", err.Error())
@@ -108,4 +91,34 @@ func main() {
 		}
 		klog.Infof("For loop?")
 	}
+}
+
+func main() {
+	pollingIntervalSeconds := flag.Int("poll-interval", 60, "The interval (in seconds) to poll and update node information")
+	flag.Parse()
+
+	interval := time.Duration(*pollingIntervalSeconds) * time.Second
+
+	klog.Infof("Starting Linode Kubernetes Node Decorator: version %s", version)
+	klog.Infof("The poll interval is set to %v seconds", interval)
+
+	clientset, err := GetClientset()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	node, err := GetCurrentNode(*clientset)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	client, err := metadata.NewClient(
+		context.Background(),
+		metadata.ClientWithManagedToken(),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	StartWatcher(*client, node, interval)
 }
