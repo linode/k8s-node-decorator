@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: my-daemonset-app
+  labels:
+    app: my-daemonset-app
+spec:
+  selector:
+    matchLabels:
+      app: my-daemonset-app
+  template:
+    metadata:
+      labels:
+        app: my-daemonset-app
+    spec:
+      serviceAccount: node-decorator-account
+      containers:
+      - name: my-container
+        image: zliangatakamai/k8s-node-decorator:test15
+        args: ["--poll-interval=30"]
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"

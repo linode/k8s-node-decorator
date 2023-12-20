@@ -18,3 +18,8 @@ build:
 .PHONY: docker-build
 docker-build:
 	docker build --platform=$(PLATFORM) --progress=plain -t $(IMAGE_TAG) --build-arg VERSION=$(VERSION) -f ./Dockerfile .
+
+.PHONY: fmt
+fmt:
+	gofumpt -w -l .
+
