@@ -17,7 +17,7 @@ spec:
       serviceAccount: node-decorator-account
       containers:
       - name: my-container
-        image: zliangatakamai/k8s-node-decorator:test19
+        image: zliangatakamai/k8s-node-decorator:v0.1.0
         args: ["--poll-interval=30"]
         env:
         - name: NODE_NAME
