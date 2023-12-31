@@ -27,7 +27,7 @@ func init() {
 func GetCurrentNode(clientset kubernetes.Clientset) (*corev1.Node, error) {
 	nodeName := os.Getenv("NODE_NAME")
 	if nodeName == "" {
-		return nil, errors.New("Environment variable POD_NAME is not set")
+		return nil, errors.New("Environment variable NODE_NAME is not set")
 	}
 
 	node, err := clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
@@ -62,7 +62,7 @@ func GetClientset() (*kubernetes.Clientset, error) {
 	return clientset, nil
 }
 
-func StartWatcher(client metadata.Client, node *corev1.Node, interval time.Duration) {
+func StartDecorator(client metadata.Client, node *corev1.Node, interval time.Duration) {
 	instanceData, err := client.GetInstance(context.Background())
 	if err != nil {
 		klog.Errorf("Failed to get the initial instance data: %s", err.Error())
@@ -85,11 +85,9 @@ func StartWatcher(client metadata.Client, node *corev1.Node, interval time.Durat
 				klog.Infof("Change to instance detected.\nNew data: %v\n", data)
 				UpdateNodeLabels(node, *data)
 			}
-
 		case err := <-instanceWatcher.Errors:
 			klog.Infof("Got error from instance watcher: %s", err)
 		}
-		klog.Infof("For loop?")
 	}
 }
 
@@ -120,5 +118,5 @@ func main() {
 		panic(err)
 	}
 
-	StartWatcher(*client, node, interval)
+	StartDecorator(*client, node, interval)
 }
