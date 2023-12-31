@@ -14,7 +14,7 @@ spec:
         app: my-daemonset-app
     spec:
       hostNetwork: true
-      serviceAccount: node-decorator-account
+      serviceAccount: k8s-node-decorator-account
       containers:
       - name: my-container
         image: zliangatakamai/k8s-node-decorator:v0.1.0
