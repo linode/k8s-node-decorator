@@ -98,7 +98,7 @@ func main() {
 	interval := time.Duration(*pollingIntervalSeconds) * time.Second
 
 	klog.Infof("Starting Linode Kubernetes Node Decorator: version %s", version)
-	klog.Infof("The poll interval is set to %v seconds", interval)
+	klog.Infof("The poll interval is set to %v.", interval)
 
 	clientset, err := GetClientset()
 	if err != nil {
