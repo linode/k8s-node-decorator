@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: my-daemonset-app
+  name: k8s-node-decorator
   labels:
-    app: my-daemonset-app
+    app: k8s-node-decorator
 spec:
   selector:
     matchLabels:
-      app: my-daemonset-app
+      app: k8s-node-decorator
   template:
     metadata:
       labels:
-        app: my-daemonset-app
+        app: k8s-node-decorator
     spec:
       hostNetwork: true
       serviceAccount: k8s-node-decorator-account
