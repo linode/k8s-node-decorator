@@ -38,7 +38,14 @@ func GetCurrentNode(clientset kubernetes.Clientset) (*corev1.Node, error) {
 	return node, nil
 }
 
-func UpdateNodeLabels(node *corev1.Node, instanceData metadata.InstanceData) {
+func UpdateNodeLabels(node *corev1.Node, instanceData *metadata.InstanceData) {
+	if instanceData == nil {
+		klog.Warningf(
+			"The instance data received from Linode metadata service in node %s of namespace %s is nil.",
+			node.Name, node.Namespace,
+		)
+		return
+	}
 	klog.Infof("Updating node labels with Linode instance data: %v", instanceData)
 
 	node.Labels["linode_label"] = instanceData.Label
@@ -68,9 +75,7 @@ func StartDecorator(client metadata.Client, node *corev1.Node, interval time.Dur
 		klog.Errorf("Failed to get the initial instance data: %s", err.Error())
 	}
 
-	if instanceData != nil {
-		UpdateNodeLabels(node, *instanceData)
-	}
+	UpdateNodeLabels(node, instanceData)
 
 	instanceWatcher := client.NewInstanceWatcher(
 		metadata.WatcherWithInterval(interval),
@@ -81,10 +86,7 @@ func StartDecorator(client metadata.Client, node *corev1.Node, interval time.Dur
 	for {
 		select {
 		case data := <-instanceWatcher.Updates:
-			if instanceData != nil {
-				klog.Infof("Change to instance detected.\nNew data: %v\n", data)
-				UpdateNodeLabels(node, *data)
-			}
+			UpdateNodeLabels(node, data)
 		case err := <-instanceWatcher.Errors:
 			klog.Infof("Got error from instance watcher: %s", err)
 		}
