@@ -38,14 +38,19 @@ func GetCurrentNode(clientset kubernetes.Clientset) (*corev1.Node, error) {
 	return node, nil
 }
 
-func UpdateNodeLabels(node *corev1.Node, instanceData *metadata.InstanceData) {
+func UpdateNodeLabels(
+	clientset *kubernetes.Clientset,
+	instanceData *metadata.InstanceData,
+) error {
 	if instanceData == nil {
-		klog.Warningf(
-			"The instance data received from Linode metadata service in node %s of namespace %s is nil.",
-			node.Name, node.Namespace,
-		)
-		return
+		return fmt.Errorf("instance data received from Linode metadata service is nil")
 	}
+
+	node, err := GetCurrentNode(*clientset)
+	if err != nil {
+		return fmt.Errorf("failed to get the node: %w", err)
+	}
+
 	klog.Infof("Updating node labels with Linode instance data: %v", instanceData)
 
 	node.Labels["linode_label"] = instanceData.Label
@@ -53,6 +58,15 @@ func UpdateNodeLabels(node *corev1.Node, instanceData *metadata.InstanceData) {
 	node.Labels["linode_region"] = instanceData.Region
 	node.Labels["linode_type"] = instanceData.Type
 	node.Labels["linode_host"] = instanceData.HostUUID
+
+	_, err = clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
+
+	if err != nil {
+		klog.Errorf("Failed to update labels: %s", err.Error())
+		return err
+	}
+
+	return nil
 }
 
 func GetClientset() (*kubernetes.Clientset, error) {
@@ -69,13 +83,17 @@ func GetClientset() (*kubernetes.Clientset, error) {
 	return clientset, nil
 }
 
-func StartDecorator(client metadata.Client, node *corev1.Node, interval time.Duration) {
+func StartDecorator(client metadata.Client, clientset *kubernetes.Clientset, interval time.Duration) {
 	instanceData, err := client.GetInstance(context.Background())
 	if err != nil {
 		klog.Errorf("Failed to get the initial instance data: %s", err.Error())
+	} else {
+		err = UpdateNodeLabels(clientset, instanceData)
 	}
 
-	UpdateNodeLabels(node, instanceData)
+	if err != nil {
+		klog.Error(err)
+	}
 
 	instanceWatcher := client.NewInstanceWatcher(
 		metadata.WatcherWithInterval(interval),
@@ -86,15 +104,21 @@ func StartDecorator(client metadata.Client, node *corev1.Node, interval time.Dur
 	for {
 		select {
 		case data := <-instanceWatcher.Updates:
-			UpdateNodeLabels(node, data)
+			err = UpdateNodeLabels(clientset, data)
+			if err != nil {
+				klog.Error(err)
+			}
 		case err := <-instanceWatcher.Errors:
-			klog.Infof("Got error from instance watcher: %s", err)
+			klog.Errorf("Got error from instance watcher: %s", err)
 		}
 	}
 }
 
 func main() {
-	pollingIntervalSeconds := flag.Int("poll-interval", 60, "The interval (in seconds) to poll and update node information")
+	pollingIntervalSeconds := flag.Int(
+		"poll-interval", 60,
+		"The interval (in seconds) to poll and update node information",
+	)
 	flag.Parse()
 
 	interval := time.Duration(*pollingIntervalSeconds) * time.Second
@@ -107,7 +131,7 @@ func main() {
 		panic(err.Error())
 	}
 
-	node, err := GetCurrentNode(*clientset)
+	_, err = GetCurrentNode(*clientset)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -120,5 +144,5 @@ func main() {
 		panic(err)
 	}
 
-	StartDecorator(*client, node, interval)
+	StartDecorator(*client, clientset, interval)
 }
