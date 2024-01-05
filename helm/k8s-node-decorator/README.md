@@ -12,7 +12,7 @@ A Helm chart for updating annotations and labels of (Linode based) Kubernetes no
 | decorator.image.pullPolicy | string | `"IfNotPresent"` | Container image pull policy. |
 | decorator.image.repository | string | `"docker.io/zliangatakamai/k8s-node-decorator"` | The decorator container image repository. |
 | decorator.image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
-| decorator.pollInterval | string | `"30"` | The time interval in seconds between 2 polls to the Linode Metadata services by the decorator.  |
+| decorator.pollInterval | string | `"30s"` | The time interval between 2 polls to the Linode Metadata services by the decorator.  |
 | fullnameOverride | string | `""` | Overrides the full chart name. |
 | imagePullSecrets | list | `[]` | List of Docker registry secret names to pull images. |
 | nameOverride | string | `""` | Overrides the chart name. |
