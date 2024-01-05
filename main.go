@@ -106,7 +106,7 @@ func StartDecorator(client metadata.Client, clientset *kubernetes.Clientset, int
 		case data := <-instanceWatcher.Updates:
 			err = UpdateNodeLabels(clientset, data)
 			if err != nil {
-				klog.Error(err)
+				klog.Fatal(err)
 			}
 		case err := <-instanceWatcher.Errors:
 			klog.Errorf("Got error from instance watcher: %s", err)
@@ -127,12 +127,12 @@ func main() {
 
 	clientset, err := GetClientset()
 	if err != nil {
-		panic(err.Error())
+		klog.Fatal(err)
 	}
 
 	_, err = GetCurrentNode(clientset)
 	if err != nil {
-		panic(err.Error())
+		klog.Fatal(err)
 	}
 
 	client, err := metadata.NewClient(
@@ -140,7 +140,7 @@ func main() {
 		metadata.ClientWithManagedToken(),
 	)
 	if err != nil {
-		panic(err)
+		klog.Fatal(err)
 	}
 
 	StartDecorator(*client, clientset, *interval)
