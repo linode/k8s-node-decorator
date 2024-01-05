@@ -115,13 +115,12 @@ func StartDecorator(client metadata.Client, clientset *kubernetes.Clientset, int
 }
 
 func main() {
-	pollingIntervalSeconds := flag.Int(
-		"poll-interval", 60,
+	var interval *time.Duration
+	flag.DurationVar(
+		interval, "poll-interval", 60*time.Second,
 		"The interval (in seconds) to poll and update node information",
 	)
 	flag.Parse()
-
-	interval := time.Duration(*pollingIntervalSeconds) * time.Second
 
 	klog.Infof("Starting Linode Kubernetes Node Decorator: version %s", version)
 	klog.Infof("The poll interval is set to %v.", interval)
@@ -144,5 +143,5 @@ func main() {
 		panic(err)
 	}
 
-	StartDecorator(*client, clientset, interval)
+	StartDecorator(*client, clientset, *interval)
 }
