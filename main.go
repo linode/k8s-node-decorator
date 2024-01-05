@@ -84,7 +84,7 @@ func GetClientset() (*kubernetes.Clientset, error) {
 }
 
 func StartDecorator(client metadata.Client, clientset *kubernetes.Clientset, interval time.Duration) {
-	instanceData, err := client.GetInstance(context.Background())
+	instanceData, err := client.GetInstance(context.TODO())
 	if err != nil {
 		klog.Errorf("Failed to get the initial instance data: %s", err.Error())
 	} else {
