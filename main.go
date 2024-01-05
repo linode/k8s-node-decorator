@@ -24,7 +24,7 @@ func init() {
 	_ = flag.Set("logtostderr", "true")
 }
 
-func GetCurrentNode(clientset kubernetes.Clientset) (*corev1.Node, error) {
+func GetCurrentNode(clientset *kubernetes.Clientset) (*corev1.Node, error) {
 	nodeName := os.Getenv("NODE_NAME")
 	if nodeName == "" {
 		return nil, errors.New("Environment variable NODE_NAME is not set")
@@ -46,7 +46,7 @@ func UpdateNodeLabels(
 		return fmt.Errorf("instance data received from Linode metadata service is nil")
 	}
 
-	node, err := GetCurrentNode(*clientset)
+	node, err := GetCurrentNode(clientset)
 	if err != nil {
 		return fmt.Errorf("failed to get the node: %w", err)
 	}
@@ -131,7 +131,7 @@ func main() {
 		panic(err.Error())
 	}
 
-	_, err = GetCurrentNode(*clientset)
+	_, err = GetCurrentNode(clientset)
 	if err != nil {
 		panic(err.Error())
 	}
