@@ -128,9 +128,9 @@ func main() {
 		klog.Fatal("Environment variable NODE_NAME is not set")
 	}
 
-	var interval *time.Duration
+	var interval time.Duration
 	flag.DurationVar(
-		interval, "poll-interval", 60*time.Second,
+		&interval, "poll-interval", 60*time.Second,
 		"The time interval to poll and update node information",
 	)
 	flag.Parse()
@@ -156,5 +156,5 @@ func main() {
 		klog.Fatal(err)
 	}
 
-	StartDecorator(*client, clientset, *interval)
+	StartDecorator(*client, clientset, interval)
 }
