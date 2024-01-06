@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -19,23 +18,14 @@ import (
 )
 
 var version string
+var nodeName string
 
 func init() {
 	_ = flag.Set("logtostderr", "true")
 }
 
 func GetCurrentNode(clientset *kubernetes.Clientset) (*corev1.Node, error) {
-	nodeName := os.Getenv("NODE_NAME")
-	if nodeName == "" {
-		return nil, errors.New("Environment variable NODE_NAME is not set")
-	}
-
-	node, err := clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get node: %w", err)
-	}
-
-	return node, nil
+	return clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
 }
 
 func UpdateNodeLabels(
@@ -115,6 +105,11 @@ func StartDecorator(client metadata.Client, clientset *kubernetes.Clientset, int
 }
 
 func main() {
+	nodeName = os.Getenv("NODE_NAME")
+	if nodeName == "" {
+		klog.Fatal("Environment variable NODE_NAME is not set")
+	}
+
 	var interval *time.Duration
 	flag.DurationVar(
 		interval, "poll-interval", 60*time.Second,
