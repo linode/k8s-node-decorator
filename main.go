@@ -17,8 +17,10 @@ import (
 	metadata "github.com/linode/go-metadata"
 )
 
-var version string
-var nodeName string
+var (
+	version  string
+	nodeName string
+)
 
 func init() {
 	_ = flag.Set("logtostderr", "true")
@@ -26,6 +28,18 @@ func init() {
 
 func GetCurrentNode(clientset *kubernetes.Clientset) (*corev1.Node, error) {
 	return clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
+}
+
+func SetLabel(node *corev1.Node, key, newValue string) (changed bool) {
+	changed = false
+	oldValue, ok := node.Labels[key]
+
+	if !ok || oldValue != newValue {
+		changed = true
+		node.Labels[key] = newValue
+	}
+
+	return changed
 }
 
 func UpdateNodeLabels(
@@ -42,12 +56,16 @@ func UpdateNodeLabels(
 	}
 
 	klog.Infof("Updating node labels with Linode instance data: %v", instanceData)
+	labelsUpdated := false
+	labelsUpdated = labelsUpdated || SetLabel(node, "decorator.linode.com/label", instanceData.Label)
+	labelsUpdated = labelsUpdated || SetLabel(node, "decorator.linode.com/instance-id", strconv.Itoa(instanceData.ID))
+	labelsUpdated = labelsUpdated || SetLabel(node, "decorator.linode.com/region", instanceData.Region)
+	labelsUpdated = labelsUpdated || SetLabel(node, "decorator.linode.com/instance-type", instanceData.Type)
+	labelsUpdated = labelsUpdated || SetLabel(node, "decorator.linode.com/host", instanceData.HostUUID)
 
-	node.Labels["linode_label"] = instanceData.Label
-	node.Labels["linode_id"] = strconv.Itoa(instanceData.ID)
-	node.Labels["linode_region"] = instanceData.Region
-	node.Labels["linode_type"] = instanceData.Type
-	node.Labels["linode_host"] = instanceData.HostUUID
+	if !labelsUpdated {
+		return nil
+	}
 
 	_, err = clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
 
