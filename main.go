@@ -57,11 +57,18 @@ func UpdateNodeLabels(
 
 	klog.Infof("Updating node labels with Linode instance data: %v", instanceData)
 	labelsUpdated := false
-	labelsUpdated = labelsUpdated || SetLabel(node, "decorator.linode.com/label", instanceData.Label)
-	labelsUpdated = labelsUpdated || SetLabel(node, "decorator.linode.com/instance-id", strconv.Itoa(instanceData.ID))
-	labelsUpdated = labelsUpdated || SetLabel(node, "decorator.linode.com/region", instanceData.Region)
-	labelsUpdated = labelsUpdated || SetLabel(node, "decorator.linode.com/instance-type", instanceData.Type)
-	labelsUpdated = labelsUpdated || SetLabel(node, "decorator.linode.com/host", instanceData.HostUUID)
+
+	handleUpdated := func(updated bool) {
+		if updated {
+			labelsUpdated = updated
+		}
+	}
+
+	handleUpdated(SetLabel(node, "decorator.linode.com/label", instanceData.Label))
+	handleUpdated(SetLabel(node, "decorator.linode.com/instance-id", strconv.Itoa(instanceData.ID)))
+	handleUpdated(SetLabel(node, "decorator.linode.com/region", instanceData.Region))
+	handleUpdated(SetLabel(node, "decorator.linode.com/instance-type", instanceData.Type))
+	handleUpdated(SetLabel(node, "decorator.linode.com/host", instanceData.HostUUID))
 
 	if !labelsUpdated {
 		return nil
