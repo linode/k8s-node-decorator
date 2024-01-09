@@ -81,6 +81,8 @@ func UpdateNodeLabels(
 		return err
 	}
 
+	klog.Infof("Successfully updated the labels of the node")
+
 	return nil
 }
 
