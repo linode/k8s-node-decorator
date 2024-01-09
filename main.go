@@ -102,10 +102,9 @@ func StartDecorator(client metadata.Client, clientset *kubernetes.Clientset, int
 	instanceData, err := client.GetInstance(context.TODO())
 	if err != nil {
 		klog.Fatalf("Failed to get the initial instance data: %s", err.Error())
-	} else {
-		err = UpdateNodeLabels(clientset, instanceData)
 	}
 
+	err = UpdateNodeLabels(clientset, instanceData)
 	if err != nil {
 		klog.Error(err)
 	}
