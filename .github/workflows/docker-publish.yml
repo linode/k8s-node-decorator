@@ -11,7 +11,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: zliangatakamai/k8s-node-decorator
+  IMAGE_NAME: linode/k8s-node-decorator
 
 jobs:
   build:

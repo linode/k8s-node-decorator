@@ -10,7 +10,7 @@ A Helm chart for updating annotations and labels of (Linode based) Kubernetes no
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Node affinity rules for pod assignment. |
 | decorator.image.pullPolicy | string | `"IfNotPresent"` | Container image pull policy. |
-| decorator.image.repository | string | `"docker.io/zliangatakamai/k8s-node-decorator"` | The decorator container image repository. |
+| decorator.image.repository | string | `"docker.io/linode/k8s-node-decorator"` | The decorator container image repository. |
 | decorator.image.tag | string | `""` | Overrides the image tag whose default is the chart appVersion. |
 | decorator.pollInterval | string | `"30s"` | The time interval between 2 polls to the Linode Metadata services by the decorator.  |
 | fullnameOverride | string | `""` | Overrides the full chart name. |

@@ -12,7 +12,7 @@ decorator:
 
   image:
     # -- The decorator container image repository.
-    repository: docker.io/zliangatakamai/k8s-node-decorator
+    repository: docker.io/linode/k8s-node-decorator
 
     # -- Container image pull policy.
     pullPolicy: IfNotPresent
