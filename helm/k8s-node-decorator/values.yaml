@@ -8,7 +8,7 @@
 
 decorator:
   # -- The time interval between 2 polls to the Linode Metadata services by the decorator. 
-  pollInterval: "30s"
+  pollInterval: "5m"
 
   image:
     # -- The decorator container image repository.

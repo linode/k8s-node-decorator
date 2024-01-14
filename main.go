@@ -138,7 +138,7 @@ func main() {
 
 	var interval time.Duration
 	flag.DurationVar(
-		&interval, "poll-interval", 60*time.Second,
+		&interval, "poll-interval", 5*time.Minute,
 		"The time interval to poll and update node information",
 	)
 	flag.Parse()
