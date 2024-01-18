@@ -51,6 +51,8 @@ func testParseTag(
 func testParseTags(
 	t *testing.T, expectedResults map[string]string, tags []string,
 ) {
+	t.Helper()
+
 	parsedTags := decorator.ParseTags(tags)
 	if len(parsedTags) != len(expectedResults) {
 		t.Errorf(
