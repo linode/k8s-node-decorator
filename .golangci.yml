@@ -2,8 +2,7 @@ linters:
   enable:
     - gofmt
     - goimports
-    - structcheck
-    - varcheck
+    - unused
     - staticcheck
     - unconvert
     - revive
