@@ -45,12 +45,14 @@ func ParseTag(tag string) (result *KeyValueTag) {
 	return result
 }
 
-func ParseTags(tags []string) (result []KeyValueTag) {
+func ParseTags(tags []string) map[string]string {
 	sort.Strings(tags)
+
+	result := make(map[string]string)
 	for _, tag := range tags {
 		parsedTag := ParseTag(tag)
 		if parsedTag != nil {
-			result = append(result, *parsedTag)
+			result[parsedTag.Key] = parsedTag.Value
 		}
 	}
 

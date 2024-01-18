@@ -32,36 +32,44 @@ func TestParseInvalidTag(t *testing.T) {
 	}
 }
 
-func checkParsedTags(
-	t *testing.T, expectedKeys, expectedValues []string, parsedTags []decorator.KeyValueTag,
+func testParseTag(
+	t *testing.T, expectedKeys, expectedValues, tags []string,
 ) {
 	t.Helper()
 
-	if len(expectedKeys) != len(parsedTags) || len(expectedValues) != len(parsedTags) {
-		t.Fatalf(
-			"length of expected keys (%d) or expected keys (%d) mismatches with parsed tags (%d)",
-			len(expectedKeys), len(expectedValues), len(parsedTags),
+	for i, tag := range tags {
+		parsedTag := decorator.ParseTag(tag)
+		if parsedTag.Key != expectedKeys[i] {
+			t.Errorf("Expected key '%s' but got '%s'", expectedKeys[i], parsedTag.Key)
+		}
+		if parsedTag.Value != expectedValues[i] {
+			t.Errorf("Expected value '%s' but got '%s'", expectedValues[i], parsedTag.Value)
+		}
+	}
+}
+
+func testParseTags(
+	t *testing.T, expectedResults map[string]string, tags []string,
+) {
+	parsedTags := decorator.ParseTags(tags)
+	if len(parsedTags) != len(expectedResults) {
+		t.Errorf(
+			"Length of parsed tags (%d) doesn't equal to length of expected results (%d)",
+			len(parsedTags), len(expectedResults),
 		)
 	}
 
-	for i, parsedTag := range parsedTags {
-		if parsedTag.Key != expectedKeys[i] {
+	for key, value := range parsedTags {
+		if value != expectedResults[key] {
 			t.Errorf(
-				"Expected key '%s' but got '%s'",
-				expectedKeys[i], parsedTag.Key,
-			)
-		}
-
-		if parsedTag.Value != expectedValues[i] {
-			t.Errorf(
-				"Expected value '%s' but got '%s'",
-				expectedValues[i], parsedTag.Value,
+				"Expected value '%s' of key '%s' but got '%s'",
+				expectedResults[key], key, value,
 			)
 		}
 	}
 }
 
-func TestParseKeyOnlyTag(t *testing.T) {
+func TestParseKeyOnlyTags(t *testing.T) {
 	keyOnlyTags := []string{"foo=", "bar", "a"}
 	expectedKeys := []string{
 		decorator.TagLabelPrefix + "foo",
@@ -69,19 +77,17 @@ func TestParseKeyOnlyTag(t *testing.T) {
 		decorator.TagLabelPrefix + "a",
 	}
 	expectedValues := []string{"", "", ""}
+	testParseTag(t, expectedKeys, expectedValues, keyOnlyTags)
 
-	parsedTags := decorator.ParseTags(keyOnlyTags)
-	if len(parsedTags) < len(keyOnlyTags) {
-		t.Errorf(
-			"All valid key only tags (%v) should be parsed but some were missing after parsing (%v)",
-			keyOnlyTags, parsedTags,
-		)
+	expectedResults := map[string]string{
+		decorator.TagLabelPrefix + "foo": "",
+		decorator.TagLabelPrefix + "bar": "",
+		decorator.TagLabelPrefix + "a":   "",
 	}
-
-	checkParsedTags(t, expectedKeys, expectedValues, parsedTags)
+	testParseTags(t, expectedResults, keyOnlyTags)
 }
 
-func TestParseKeyValueTag(t *testing.T) {
+func TestParseKeyValueTags(t *testing.T) {
 	keyValueTags := []string{"foo=bar", "foo:bar", "a=b", "a:b"}
 	expectedKeys := []string{
 		decorator.TagLabelPrefix + "foo",
@@ -90,16 +96,13 @@ func TestParseKeyValueTag(t *testing.T) {
 		decorator.TagLabelPrefix + "a",
 	}
 	expectedValues := []string{"bar", "bar", "b", "b"}
+	testParseTag(t, expectedKeys, expectedValues, keyValueTags)
 
-	parsedTags := decorator.ParseTags(keyValueTags)
-	if len(parsedTags) < len(keyValueTags) {
-		t.Errorf(
-			"All valid key only tags (%v) should be parsed but some were missing after parsing (%v)",
-			keyValueTags, parsedTags,
-		)
+	expectedResults := map[string]string{
+		decorator.TagLabelPrefix + "foo": "bar",
+		decorator.TagLabelPrefix + "a":   "b",
 	}
-
-	checkParsedTags(t, expectedKeys, expectedValues, parsedTags)
+	testParseTags(t, expectedResults, keyValueTags)
 }
 
 func TestOutOfOrderTags(t *testing.T) {
@@ -114,4 +117,13 @@ func TestOutOfOrderTags(t *testing.T) {
 	if !(reflect.DeepEqual(parsedTags1, parsedTags2) && reflect.DeepEqual(parsedTags1, parsedTags3)) {
 		t.Error("Tags parser should return consistent result regardless of order of raw tags")
 	}
+
+	expectedResults := map[string]string{
+		decorator.TagLabelPrefix + "bar": "quux",
+		decorator.TagLabelPrefix + "foo": "bar",
+		decorator.TagLabelPrefix + "baz": "qux",
+	}
+	testParseTags(t, expectedResults, tags1)
+	testParseTags(t, expectedResults, tags2)
+	testParseTags(t, expectedResults, tags3)
 }

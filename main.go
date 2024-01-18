@@ -71,8 +71,8 @@ func UpdateNodeLabels(
 	handleUpdated(SetLabel(node, "decorator.linode.com/instance-type", instanceData.Type))
 	handleUpdated(SetLabel(node, "decorator.linode.com/host", instanceData.HostUUID))
 
-	for _, tag := range decorator.ParseTags(instanceData.Tags) {
-		handleUpdated(SetLabel(node, tag.Key, tag.Value))
+	for key, value := range decorator.ParseTags(instanceData.Tags) {
+		handleUpdated(SetLabel(node, key, value))
 	}
 
 	if !labelsUpdated {
