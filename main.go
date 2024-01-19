@@ -18,8 +18,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"maps"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -85,7 +87,23 @@ func UpdateNodeLabels(
 	handleUpdated(SetLabel(node, "decorator.linode.com/instance-type", instanceData.Type))
 	handleUpdated(SetLabel(node, "decorator.linode.com/host", instanceData.HostUUID))
 
-	for key, value := range decorator.ParseTags(instanceData.Tags) {
+	oldTags := make(map[string]string)
+	maps.Copy(oldTags, node.Labels)
+
+	newTags := decorator.ParseTags(instanceData.Tags)
+
+	for key := range oldTags {
+		if !strings.HasPrefix(key, decorator.TagLabelPrefix) {
+			continue
+		}
+		if _, ok := newTags[key]; !ok {
+			delete(node.Labels, key)
+			labelsUpdated = true
+			continue
+		}
+	}
+
+	for key, value := range newTags {
 		handleUpdated(SetLabel(node, key, value))
 	}
 
