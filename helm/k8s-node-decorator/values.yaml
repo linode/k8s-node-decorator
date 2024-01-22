@@ -1,0 +1,76 @@
+# Default values for k8s-node-decorator.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# TODO:
+# Change to the image below to be the image in
+# Linode namespace when this project is published.
+
+decorator:
+  # -- The time interval between 2 polls to the Linode Metadata services by the decorator. 
+  pollInterval: "5m"
+
+  image:
+    # -- The decorator container image repository.
+    repository: docker.io/linode/k8s-node-decorator
+
+    # -- Container image pull policy.
+    pullPolicy: IfNotPresent
+  
+    # -- Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+
+# -- List of Docker registry secret names to pull images.
+imagePullSecrets: []
+
+# -- Overrides the chart name.
+nameOverride: ""
+
+# -- Overrides the full chart name.
+fullnameOverride: ""
+
+# -- Annotations to add to the pod.
+podAnnotations: {}
+
+# -- Labels to add to the pod.
+podLabels: {}
+
+podSecurityContext:
+  # -- Run the pod as a non-root user.
+  runAsNonRoot: true
+
+  # -- User ID to run the pod as.
+  runAsUser: 65532
+
+securityContext:
+  # -- Controls whether a process can gain more privileges than its parent process.
+  allowPrivilegeEscalation: false
+
+  # -- Container runs with a read-only root filesystem.
+  readOnlyRootFilesystem: true
+
+rbac:
+  # -- Annotations to add to the service account, cluster role, and cluster role binding.
+  annotations: {}
+
+  # -- The name of the service account, cluster role, and cluster role binding to use.
+  # If not set, a name is generated using the fullname template.
+  name: ""
+
+# -- Specify CPU and memory resource limits if needed.
+resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# -- Node labels for pod assignment.
+nodeSelector: {}
+
+# -- Tolerations for pod assignment.
+tolerations: []
+
+# -- Node affinity rules for pod assignment.
+affinity: {}

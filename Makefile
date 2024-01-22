@@ -1,7 +1,9 @@
 VERSION := $(shell git describe --long --tags --dirty 2> /dev/null || echo "dev")
 GOLANGCI_LINT_IMG := golangci/golangci-lint:v1.55-alpine
 
-PLATFORM       ?= linux/amd64
+ARCH           ?= amd64
+OS             ?= linux
+PLATFORM       ?= $(OS)/$(ARCH)
 REGISTRY_NAME  ?= index.docker.io/linode
 IMAGE_NAME     ?= k8s-node-decorator
 IMAGE_VERSION  ?= $(VERSION)
@@ -17,4 +19,9 @@ build:
 
 .PHONY: docker-build
 docker-build:
-	docker build --platform=$(PLATFORM) --progress=plain -t $(IMAGE_TAG) --build-arg VERSION=$(VERSION) -f ./Dockerfile .
+	DOCKER_BUILDKIT=1 docker build --platform=$(PLATFORM) --progress=plain -t $(IMAGE_TAG) --build-arg VERSION=$(VERSION) -f ./Dockerfile .
+
+.PHONY: fmt
+fmt:
+	gofumpt -w -l .
+
