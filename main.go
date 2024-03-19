@@ -17,15 +17,9 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
-	"maps"
 	"os"
-	"strconv"
-	"strings"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
@@ -34,93 +28,10 @@ import (
 	decorator "github.com/linode/k8s-node-decorator/k8snodedecorator"
 )
 
-var (
-	version  string
-	nodeName string
-)
+var version string
 
 func init() {
 	_ = flag.Set("logtostderr", "true")
-}
-
-func GetCurrentNode(clientset *kubernetes.Clientset) (*corev1.Node, error) {
-	return clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
-}
-
-func SetLabel(node *corev1.Node, key, newValue string) (changed bool) {
-	changed = false
-	oldValue, ok := node.Labels[key]
-
-	if !ok || oldValue != newValue {
-		changed = true
-		node.Labels[key] = newValue
-	}
-
-	return changed
-}
-
-func UpdateNodeLabels(
-	clientset *kubernetes.Clientset,
-	instanceData *metadata.InstanceData,
-) error {
-	if instanceData == nil {
-		return fmt.Errorf("instance data received from Linode metadata service is nil")
-	}
-
-	node, err := GetCurrentNode(clientset)
-	if err != nil {
-		return fmt.Errorf("failed to get the node: %w", err)
-	}
-
-	klog.Infof("Updating node labels with Linode instance data: %v", instanceData)
-	labelsUpdated := false
-
-	handleUpdated := func(updated bool) {
-		if updated {
-			labelsUpdated = updated
-		}
-	}
-
-	handleUpdated(SetLabel(node, "decorator.linode.com/label", instanceData.Label))
-	handleUpdated(SetLabel(node, "decorator.linode.com/instance-id", strconv.Itoa(instanceData.ID)))
-	handleUpdated(SetLabel(node, "decorator.linode.com/region", instanceData.Region))
-	handleUpdated(SetLabel(node, "decorator.linode.com/instance-type", instanceData.Type))
-	handleUpdated(SetLabel(node, "decorator.linode.com/host", instanceData.HostUUID))
-
-	oldTags := make(map[string]string)
-	maps.Copy(oldTags, node.Labels)
-
-	newTags := decorator.ParseTags(instanceData.Tags)
-
-	for key := range oldTags {
-		if !strings.HasPrefix(key, decorator.TagLabelPrefix) {
-			continue
-		}
-		if _, ok := newTags[key]; !ok {
-			delete(node.Labels, key)
-			labelsUpdated = true
-			continue
-		}
-	}
-
-	for key, value := range newTags {
-		handleUpdated(SetLabel(node, key, value))
-	}
-
-	if !labelsUpdated {
-		return nil
-	}
-
-	_, err = clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
-
-	if err != nil {
-		klog.Errorf("Failed to update labels: %s", err.Error())
-		return err
-	}
-
-	klog.Infof("Successfully updated the labels of the node")
-
-	return nil
 }
 
 func GetClientset() (*kubernetes.Clientset, error) {
@@ -143,7 +54,7 @@ func StartDecorator(client metadata.Client, clientset *kubernetes.Clientset, int
 		klog.Fatalf("Failed to get the initial instance data: %s", err.Error())
 	}
 
-	err = UpdateNodeLabels(clientset, instanceData)
+	err = decorator.UpdateNodeLabels(clientset, instanceData)
 	if err != nil {
 		klog.Error(err)
 	}
@@ -152,12 +63,12 @@ func StartDecorator(client metadata.Client, clientset *kubernetes.Clientset, int
 		metadata.WatcherWithInterval(interval),
 	)
 
-	go instanceWatcher.Start(context.Background())
+	go instanceWatcher.Start(context.TODO())
 
 	for {
 		select {
 		case data := <-instanceWatcher.Updates:
-			err = UpdateNodeLabels(clientset, data)
+			err = decorator.UpdateNodeLabels(clientset, data)
 			if err != nil {
 				klog.Fatal(err)
 			}
@@ -168,10 +79,11 @@ func StartDecorator(client metadata.Client, clientset *kubernetes.Clientset, int
 }
 
 func main() {
-	nodeName = os.Getenv("NODE_NAME")
+	nodeName := os.Getenv("NODE_NAME")
 	if nodeName == "" {
 		klog.Fatal("Environment variable NODE_NAME is not set")
 	}
+	decorator.SetNodeName(nodeName)
 
 	var interval time.Duration
 	flag.DurationVar(
@@ -188,13 +100,8 @@ func main() {
 		klog.Fatal(err)
 	}
 
-	_, err = GetCurrentNode(clientset)
-	if err != nil {
-		klog.Fatal(err)
-	}
-
 	client, err := metadata.NewClient(
-		context.Background(),
+		context.TODO(),
 		metadata.ClientWithManagedToken(),
 	)
 	if err != nil {
