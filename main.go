@@ -20,62 +20,17 @@ import (
 	"os"
 	"time"
 
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
 	metadata "github.com/linode/go-metadata"
-	decorator "github.com/linode/k8s-node-decorator/k8snodedecorator"
+	"github.com/linode/k8s-node-decorator/pkg/decorator"
+	"github.com/linode/k8s-node-decorator/pkg/utils"
 )
 
 var version string
 
 func init() {
 	_ = flag.Set("logtostderr", "true")
-}
-
-func GetClientset() (*kubernetes.Clientset, error) {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-
-	return clientset, nil
-}
-
-func StartDecorator(ctx context.Context, client metadata.Client, clientset *kubernetes.Clientset, interval time.Duration) {
-	instanceData, err := client.GetInstance(ctx)
-	if err != nil {
-		klog.Fatalf("Failed to get the initial instance data: %s", err.Error())
-	}
-
-	err = decorator.UpdateNodeLabels(ctx, clientset, instanceData)
-	if err != nil {
-		klog.Error(err)
-	}
-
-	instanceWatcher := client.NewInstanceWatcher(
-		metadata.WatcherWithInterval(interval),
-	)
-
-	go instanceWatcher.Start(ctx)
-
-	for {
-		select {
-		case data := <-instanceWatcher.Updates:
-			err = decorator.UpdateNodeLabels(ctx, clientset, data)
-			if err != nil {
-				klog.Fatal(err)
-			}
-		case err := <-instanceWatcher.Errors:
-			klog.Errorf("Got error from instance watcher: %s", err)
-		}
-	}
 }
 
 func main() {
@@ -105,7 +60,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	clientset, err := GetClientset()
+	clientset, err := utils.GetClientset()
 	if err != nil {
 		klog.Fatal(err)
 	}
@@ -118,5 +73,5 @@ func main() {
 		klog.Fatal(err)
 	}
 
-	StartDecorator(ctx, *client, clientset, interval)
+	decorator.StartDecorator(ctx, *client, clientset, interval)
 }

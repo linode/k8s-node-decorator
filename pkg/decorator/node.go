@@ -1,4 +1,4 @@
-package k8snodedecorator
+package decorator
 
 import (
 	"context"
