@@ -14,6 +14,6 @@ func SetNodeName(newNodeName string) {
 	nodeName = newNodeName
 }
 
-func GetCurrentNode(clientset *kubernetes.Clientset) (*corev1.Node, error) {
-	return clientset.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
+func GetCurrentNode(ctx context.Context, clientset *kubernetes.Clientset) (*corev1.Node, error) {
+	return clientset.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
 }

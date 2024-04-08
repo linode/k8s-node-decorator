@@ -48,13 +48,13 @@ func GetClientset() (*kubernetes.Clientset, error) {
 	return clientset, nil
 }
 
-func StartDecorator(client metadata.Client, clientset *kubernetes.Clientset, interval time.Duration) {
-	instanceData, err := client.GetInstance(context.TODO())
+func StartDecorator(ctx context.Context, client metadata.Client, clientset *kubernetes.Clientset, interval time.Duration) {
+	instanceData, err := client.GetInstance(ctx)
 	if err != nil {
 		klog.Fatalf("Failed to get the initial instance data: %s", err.Error())
 	}
 
-	err = decorator.UpdateNodeLabels(clientset, instanceData)
+	err = decorator.UpdateNodeLabels(ctx, clientset, instanceData)
 	if err != nil {
 		klog.Error(err)
 	}
@@ -63,12 +63,12 @@ func StartDecorator(client metadata.Client, clientset *kubernetes.Clientset, int
 		metadata.WatcherWithInterval(interval),
 	)
 
-	go instanceWatcher.Start(context.TODO())
+	go instanceWatcher.Start(ctx)
 
 	for {
 		select {
 		case data := <-instanceWatcher.Updates:
-			err = decorator.UpdateNodeLabels(clientset, data)
+			err = decorator.UpdateNodeLabels(ctx, clientset, data)
 			if err != nil {
 				klog.Fatal(err)
 			}
@@ -90,10 +90,20 @@ func main() {
 		&interval, "poll-interval", 5*time.Minute,
 		"The time interval to poll and update node information",
 	)
+	var timeout time.Duration
+	flag.DurationVar(
+		&timeout, "timeout", 30*time.Second,
+		"The timeout for metadata and k8s client operations",
+	)
+
 	flag.Parse()
 
 	klog.Infof("Starting Linode Kubernetes Node Decorator: version %s", version)
 	klog.Infof("The poll interval is set to %v.", interval)
+	klog.Infof("The timeout is set to %v.", timeout)
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
 	clientset, err := GetClientset()
 	if err != nil {
@@ -101,12 +111,12 @@ func main() {
 	}
 
 	client, err := metadata.NewClient(
-		context.TODO(),
+		ctx,
 		metadata.ClientWithManagedToken(),
 	)
 	if err != nil {
 		klog.Fatal(err)
 	}
 
-	StartDecorator(*client, clientset, interval)
+	StartDecorator(ctx, *client, clientset, interval)
 }

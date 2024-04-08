@@ -27,6 +27,7 @@ func SetLabel(node *corev1.Node, key, newValue string) (changed bool) {
 }
 
 func UpdateNodeLabels(
+	ctx context.Context,
 	clientset *kubernetes.Clientset,
 	instanceData *metadata.InstanceData,
 ) error {
@@ -34,7 +35,7 @@ func UpdateNodeLabels(
 		return fmt.Errorf("instance data received from Linode metadata service is nil")
 	}
 
-	node, err := GetCurrentNode(clientset)
+	node, err := GetCurrentNode(ctx, clientset)
 	if err != nil {
 		return fmt.Errorf("failed to get the node: %w", err)
 	}
@@ -78,7 +79,7 @@ func UpdateNodeLabels(
 		return nil
 	}
 
-	_, err = clientset.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
+	_, err = clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
 	if err != nil {
 		klog.Errorf("Failed to update labels: %s", err.Error())
 		return err
