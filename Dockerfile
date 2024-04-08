@@ -10,8 +10,7 @@ ARG VERSION
 COPY go.mod .
 COPY go.sum .
 COPY main.go .
-COPY k8snodedecorator ./k8snodedecorator
-#COPY pkg ./pkg
+COPY pkg ./pkg
 
 RUN go mod download
 RUN go build -a -ldflags '-X main.version='${VERSION}' -extldflags "-static"' -o /bin/k8s-node-decorator /linode

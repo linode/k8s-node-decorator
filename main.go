@@ -38,7 +38,6 @@ func main() {
 	if nodeName == "" {
 		klog.Fatal("Environment variable NODE_NAME is not set")
 	}
-	decorator.SetNodeName(nodeName)
 
 	var interval time.Duration
 	flag.DurationVar(
@@ -57,13 +56,13 @@ func main() {
 	klog.Infof("The poll interval is set to %v.", interval)
 	klog.Infof("The timeout is set to %v.", timeout)
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
 	clientset, err := utils.GetClientset()
 	if err != nil {
 		klog.Fatal(err)
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
 	client, err := metadata.NewClient(
 		ctx,
@@ -73,5 +72,10 @@ func main() {
 		klog.Fatal(err)
 	}
 
-	decorator.StartDecorator(ctx, *client, clientset, interval)
+	decorator.NewDecorator(
+		decorator.WithClient(client),
+		decorator.WithClientSet(clientset),
+		decorator.WithInterval(interval),
+		decorator.WithNodeName(nodeName),
+	).Start(ctx)
 }
