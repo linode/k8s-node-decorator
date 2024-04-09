@@ -80,9 +80,6 @@ func main() {
 		klog.Fatal(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
 	client, err := metadata.NewClient(
 		ctx,
 		metadata.ClientWithManagedToken(),
