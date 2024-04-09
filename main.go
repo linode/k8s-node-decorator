@@ -18,14 +18,15 @@ import (
 	"context"
 	"flag"
 	"os"
+	"os/signal"
 	"syscall"
 	"time"
 
-	"golang.org/toolchain/src/os/signal"
 	"k8s.io/klog/v2"
 
 	metadata "github.com/linode/go-metadata"
 	"github.com/linode/k8s-node-decorator/pkg/decorator"
+	"github.com/linode/k8s-node-decorator/pkg/utils"
 )
 
 var version string
@@ -64,7 +65,7 @@ func main() {
 	)
 	defer stop()
 
-	clientset, err := GetClientset()
+	clientset, err := utils.GetClientset()
 	if err != nil {
 		klog.Fatal(err)
 	}
@@ -84,6 +85,7 @@ func main() {
 		decorator.WithClient(client),
 		decorator.WithClientSet(clientset),
 		decorator.WithInterval(interval),
+		decorator.WithTimeout(timeout),
 		decorator.WithNodeName(nodeName),
 	).Start(ctx)
 }

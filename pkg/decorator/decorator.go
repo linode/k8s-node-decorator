@@ -14,6 +14,7 @@ type Decorator struct {
 	client    *metadata.Client
 	clientset *kubernetes.Clientset
 	interval  time.Duration
+	timeout   time.Duration
 	nodeName  string
 }
 
@@ -41,6 +42,12 @@ func WithClientSet(k *kubernetes.Clientset) func(*Decorator) {
 func WithInterval(i time.Duration) func(*Decorator) {
 	return func(d *Decorator) {
 		d.interval = i
+	}
+}
+
+func WithTimeout(t time.Duration) func(*Decorator) {
+	return func(d *Decorator) {
+		d.timeout = t
 	}
 }
 

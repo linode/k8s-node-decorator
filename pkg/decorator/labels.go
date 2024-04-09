@@ -18,7 +18,7 @@ func (d *Decorator) updateNodeLabels(ctx context.Context, instanceData *metadata
 		return fmt.Errorf("instance data received from Linode metadata service is nil")
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, timeout) // FIXME: set timeout to some value
+	ctx, cancel := context.WithTimeout(ctx, d.timeout)
 	defer cancel()
 
 	node, err := d.getCurrentNode(ctx)
