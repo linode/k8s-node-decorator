@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	github.com/linode/go-metadata v0.1.0
+	golang.org/toolchain v0.0.1-go1.9rc2.windows-amd64
 	k8s.io/api v0.28.4
 	k8s.io/apimachinery v0.28.4
 	k8s.io/client-go v0.28.4

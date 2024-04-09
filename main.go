@@ -18,13 +18,14 @@ import (
 	"context"
 	"flag"
 	"os"
+	"syscall"
 	"time"
 
+	"golang.org/toolchain/src/os/signal"
 	"k8s.io/klog/v2"
 
 	metadata "github.com/linode/go-metadata"
 	"github.com/linode/k8s-node-decorator/pkg/decorator"
-	"github.com/linode/k8s-node-decorator/pkg/utils"
 )
 
 var version string
@@ -56,7 +57,14 @@ func main() {
 	klog.Infof("The poll interval is set to %v.", interval)
 	klog.Infof("The timeout is set to %v.", timeout)
 
-	clientset, err := utils.GetClientset()
+	ctx, stop := signal.NotifyContext(context.Background(),
+		os.Interrupt,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+	)
+	defer stop()
+
+	clientset, err := GetClientset()
 	if err != nil {
 		klog.Fatal(err)
 	}
