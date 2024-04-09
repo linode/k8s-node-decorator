@@ -35,6 +35,9 @@ func UpdateNodeLabels(
 		return fmt.Errorf("instance data received from Linode metadata service is nil")
 	}
 
+	ctx, cancel := context.WithTimeout(ctx, timeout) // FIXME: set timeout to some value
+	defer cancel()
+
 	node, err := GetCurrentNode(ctx, clientset)
 	if err != nil {
 		return fmt.Errorf("failed to get the node: %w", err)
