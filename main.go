@@ -100,10 +100,12 @@ func main() {
 
 	klog.Infof("Starting Linode Kubernetes Node Decorator: version %s", version)
 	klog.Infof("The poll interval is set to %v.", interval)
-	klog.Infof("The timeout is set to %v.", timeout)
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+	ctx, stop := signal.NotifyContext(context.Background(),
+		os.Interrupt,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+	)
+	defer stop()
 
 	clientset, err := GetClientset()
 	if err != nil {
