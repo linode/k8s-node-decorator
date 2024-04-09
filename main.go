@@ -22,17 +22,27 @@ import (
 	"syscall"
 	"time"
 
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
 	metadata "github.com/linode/go-metadata"
 	"github.com/linode/k8s-node-decorator/pkg/decorator"
-	"github.com/linode/k8s-node-decorator/pkg/utils"
 )
 
 var version string
 
 func init() {
 	_ = flag.Set("logtostderr", "true")
+}
+
+func getClientset() (*kubernetes.Clientset, error) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	return kubernetes.NewForConfig(config)
 }
 
 func main() {
@@ -65,7 +75,7 @@ func main() {
 	)
 	defer stop()
 
-	clientset, err := utils.GetClientset()
+	clientset, err := getClientset()
 	if err != nil {
 		klog.Fatal(err)
 	}
