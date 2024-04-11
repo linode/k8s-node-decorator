@@ -35,7 +35,7 @@ spec:
           {{- toYaml .Values.securityContext | nindent 10 }}
         image: {{ include "k8s-node-decorator.decoratorImageName" . }}
         imagePullPolicy: {{ .Values.decorator.image.pullPolicy }}
-        args: ["--poll-interval={{ .Values.decorator.pollInterval }}"]
+        args: ["--poll-interval={{ .Values.decorator.pollInterval }}", "--timeout={{ .Values.decorator.timeout }}", "--prefix={{ .Values.decorator.prefix }}", "--tags-prefix={{ .Values.decorator.tagsPrefix }}"]
         env:
         - name: NODE_NAME
           valueFrom:

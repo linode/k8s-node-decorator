@@ -9,6 +9,12 @@
 decorator:
   # -- The time interval between 2 polls to the Linode Metadata services by the decorator. 
   pollInterval: "5m"
+  # -- The timeout for Linode Metadata and Kubernetes client operations.
+  timeout: "30s"
+  # -- The Node label prefix.
+  prefix: "decorator.linode.com"
+  # -- The Node label tags prefix.
+  tagsPrefix: "tags"
 
   image:
     # -- The decorator container image repository.
