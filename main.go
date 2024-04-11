@@ -62,6 +62,18 @@ func main() {
 		"The timeout for metadata and k8s client operations",
 	)
 
+	var prefix string
+	flag.StringVar(
+		&prefix, "prefix", "decorator.linode.com",
+		"Node label prefix",
+	)
+
+	var tagsPrefix string
+	flag.StringVar(
+		&tagsPrefix, "tags-prefix", "tags",
+		"Node label tags prefix",
+	)
+
 	flag.Parse()
 
 	klog.Infof("Starting Linode Kubernetes Node Decorator: version %s", version)
@@ -94,5 +106,7 @@ func main() {
 		decorator.WithInterval(interval),
 		decorator.WithTimeout(timeout),
 		decorator.WithNodeName(nodeName),
+		decorator.WithPrefix(prefix),
+		decorator.WithTagsPrefix(tagsPrefix),
 	).Start(ctx)
 }
