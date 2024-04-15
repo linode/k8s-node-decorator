@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package k8snodedecorator_test
+package decorator_test
 
 import (
 	"reflect"
 	"testing"
 
-	decorator "github.com/linode/k8s-node-decorator/k8snodedecorator"
+	"github.com/linode/k8s-node-decorator/pkg/decorator"
 )
 
 func TestParseInvalidTag(t *testing.T) {

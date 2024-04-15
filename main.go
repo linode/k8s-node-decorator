@@ -18,6 +18,8 @@ import (
 	"context"
 	"flag"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"k8s.io/client-go/kubernetes"
@@ -25,7 +27,7 @@ import (
 	"k8s.io/klog/v2"
 
 	metadata "github.com/linode/go-metadata"
-	decorator "github.com/linode/k8s-node-decorator/k8snodedecorator"
+	"github.com/linode/k8s-node-decorator/pkg/decorator"
 )
 
 var version string
@@ -34,48 +36,13 @@ func init() {
 	_ = flag.Set("logtostderr", "true")
 }
 
-func GetClientset() (*kubernetes.Clientset, error) {
+func getClientset() (*kubernetes.Clientset, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-
-	return clientset, nil
-}
-
-func StartDecorator(client metadata.Client, clientset *kubernetes.Clientset, interval time.Duration) {
-	instanceData, err := client.GetInstance(context.TODO())
-	if err != nil {
-		klog.Fatalf("Failed to get the initial instance data: %s", err.Error())
-	}
-
-	err = decorator.UpdateNodeLabels(clientset, instanceData)
-	if err != nil {
-		klog.Error(err)
-	}
-
-	instanceWatcher := client.NewInstanceWatcher(
-		metadata.WatcherWithInterval(interval),
-	)
-
-	go instanceWatcher.Start(context.TODO())
-
-	for {
-		select {
-		case data := <-instanceWatcher.Updates:
-			err = decorator.UpdateNodeLabels(clientset, data)
-			if err != nil {
-				klog.Fatal(err)
-			}
-		case err := <-instanceWatcher.Errors:
-			klog.Errorf("Got error from instance watcher: %s", err)
-		}
-	}
+	return kubernetes.NewForConfig(config)
 }
 
 func main() {
@@ -83,30 +50,49 @@ func main() {
 	if nodeName == "" {
 		klog.Fatal("Environment variable NODE_NAME is not set")
 	}
-	decorator.SetNodeName(nodeName)
 
 	var interval time.Duration
 	flag.DurationVar(
 		&interval, "poll-interval", 5*time.Minute,
 		"The time interval to poll and update node information",
 	)
+	var timeout time.Duration
+	flag.DurationVar(
+		&timeout, "timeout", 30*time.Second,
+		"The timeout for metadata and k8s client operations",
+	)
+
 	flag.Parse()
 
 	klog.Infof("Starting Linode Kubernetes Node Decorator: version %s", version)
 	klog.Infof("The poll interval is set to %v.", interval)
+	klog.Infof("The timeout is set to %v.", timeout)
 
-	clientset, err := GetClientset()
+	ctx, stop := signal.NotifyContext(context.Background(),
+		os.Interrupt,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+	)
+	defer stop()
+
+	clientset, err := getClientset()
 	if err != nil {
 		klog.Fatal(err)
 	}
 
 	client, err := metadata.NewClient(
-		context.TODO(),
+		ctx,
 		metadata.ClientWithManagedToken(),
 	)
 	if err != nil {
 		klog.Fatal(err)
 	}
 
-	StartDecorator(*client, clientset, interval)
+	decorator.NewDecorator(
+		decorator.WithClient(client),
+		decorator.WithClientSet(clientset),
+		decorator.WithInterval(interval),
+		decorator.WithTimeout(timeout),
+		decorator.WithNodeName(nodeName),
+	).Start(ctx)
 }
