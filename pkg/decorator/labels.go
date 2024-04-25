@@ -44,10 +44,11 @@ func (d *Decorator) updateNodeLabels(ctx context.Context, instanceData *metadata
 	oldTags := make(map[string]string)
 	maps.Copy(oldTags, node.Labels)
 
-	newTags := ParseTags(instanceData.Tags)
+	tagLabelPrefix := d.tagsPrefix + "." + d.prefix + "/"
+	newTags := ParseTags(instanceData.Tags, tagLabelPrefix)
 
 	for key := range oldTags {
-		if !strings.HasPrefix(key, d.tagsPrefix+"."+d.prefix+"/") {
+		if !strings.HasPrefix(key, tagLabelPrefix) {
 			continue
 		}
 		if _, ok := newTags[key]; !ok {

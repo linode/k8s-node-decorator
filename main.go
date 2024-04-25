@@ -17,6 +17,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -75,6 +76,14 @@ func main() {
 	)
 
 	flag.Parse()
+
+	if !decorator.IsValidObjectName(prefix) {
+		klog.Fatal(fmt.Errorf("invalid prefix"))
+	}
+
+	if !decorator.IsValidObjectName(tagsPrefix) {
+		klog.Fatal(fmt.Errorf("invalid tags prefix"))
+	}
 
 	klog.Infof("Starting Linode Kubernetes Node Decorator: version %s", version)
 	klog.Infof("The poll interval is set to %v.", interval)
