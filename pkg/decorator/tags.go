@@ -16,13 +16,12 @@ package decorator
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 )
 
 var TagSeparators = []rune{':', '='}
-
-const TagLabelPrefix = "tags.decorator.linode.com/"
 
 func isSeparator(r rune) bool {
 	for _, s := range TagSeparators {
@@ -38,7 +37,7 @@ type KeyValueTag struct {
 	Value string
 }
 
-func ParseTag(tag string) (result *KeyValueTag) {
+func ParseTag(tag string, tagLabelPrefix string) (result *KeyValueTag) {
 	separatorIndex := strings.IndexFunc(tag, isSeparator)
 
 	if separatorIndex == 0 {
@@ -47,11 +46,11 @@ func ParseTag(tag string) (result *KeyValueTag) {
 		result = nil
 	} else if separatorIndex == -1 {
 		result = &KeyValueTag{
-			Key: fmt.Sprintf(TagLabelPrefix + tag),
+			Key: fmt.Sprintf(tagLabelPrefix + tag),
 		}
 	} else {
 		result = &KeyValueTag{
-			Key:   fmt.Sprintf(TagLabelPrefix + tag[:separatorIndex]),
+			Key:   fmt.Sprintf(tagLabelPrefix + tag[:separatorIndex]),
 			Value: tag[separatorIndex+1:],
 		}
 	}
@@ -59,16 +58,21 @@ func ParseTag(tag string) (result *KeyValueTag) {
 	return result
 }
 
-func ParseTags(tags []string) map[string]string {
+func ParseTags(tags []string, tagLabelPrefix string) map[string]string {
 	sort.Strings(tags)
 
 	result := make(map[string]string)
 	for _, tag := range tags {
-		parsedTag := ParseTag(tag)
+		parsedTag := ParseTag(tag, tagLabelPrefix)
 		if parsedTag != nil {
 			result[parsedTag.Key] = parsedTag.Value
 		}
 	}
 
 	return result
+}
+
+func IsValidObjectName(name string) bool {
+	pattern := regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`)
+	return pattern.MatchString(name)
 }

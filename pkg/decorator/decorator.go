@@ -11,11 +11,13 @@ import (
 )
 
 type Decorator struct {
-	client    *metadata.Client
-	clientset *kubernetes.Clientset
-	interval  time.Duration
-	timeout   time.Duration
-	nodeName  string
+	client     *metadata.Client
+	clientset  *kubernetes.Clientset
+	interval   time.Duration
+	timeout    time.Duration
+	nodeName   string
+	prefix     string
+	tagsPrefix string
 }
 
 func NewDecorator(options ...func(*Decorator)) *Decorator {
@@ -54,6 +56,18 @@ func WithTimeout(t time.Duration) func(*Decorator) {
 func WithNodeName(n string) func(*Decorator) {
 	return func(d *Decorator) {
 		d.nodeName = n
+	}
+}
+
+func WithPrefix(p string) func(*Decorator) {
+	return func(d *Decorator) {
+		d.prefix = p
+	}
+}
+
+func WithTagsPrefix(t string) func(*Decorator) {
+	return func(d *Decorator) {
+		d.tagsPrefix = t
 	}
 }
 

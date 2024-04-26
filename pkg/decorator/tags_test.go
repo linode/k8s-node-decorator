@@ -21,6 +21,8 @@ import (
 	"github.com/linode/k8s-node-decorator/pkg/decorator"
 )
 
+const defaultTagLabelPrefix = "tags.decorator.linode.com/"
+
 func TestParseInvalidTag(t *testing.T) {
 	invalidTags := []string{
 		":foo",
@@ -37,7 +39,7 @@ func TestParseInvalidTag(t *testing.T) {
 		":foo=bar",
 	}
 
-	parsedTags := decorator.ParseTags(invalidTags)
+	parsedTags := decorator.ParseTags(invalidTags, defaultTagLabelPrefix)
 	if len(parsedTags) > 0 {
 		t.Errorf(
 			"None of the invalid tags (%v) should be parsed but got parsed as %v.",
@@ -52,7 +54,7 @@ func testParseTag(
 	t.Helper()
 
 	for i, tag := range tags {
-		parsedTag := decorator.ParseTag(tag)
+		parsedTag := decorator.ParseTag(tag, defaultTagLabelPrefix)
 		if parsedTag.Key != expectedKeys[i] {
 			t.Errorf("Expected key '%s' but got '%s'", expectedKeys[i], parsedTag.Key)
 		}
@@ -67,7 +69,7 @@ func testParseTags(
 ) {
 	t.Helper()
 
-	parsedTags := decorator.ParseTags(tags)
+	parsedTags := decorator.ParseTags(tags, defaultTagLabelPrefix)
 	if len(parsedTags) != len(expectedResults) {
 		t.Errorf(
 			"Length of parsed tags (%d) doesn't equal to length of expected results (%d)",
@@ -88,17 +90,17 @@ func testParseTags(
 func TestParseKeyOnlyTags(t *testing.T) {
 	keyOnlyTags := []string{"foo=", "bar", "a"}
 	expectedKeys := []string{
-		decorator.TagLabelPrefix + "foo",
-		decorator.TagLabelPrefix + "bar",
-		decorator.TagLabelPrefix + "a",
+		defaultTagLabelPrefix + "foo",
+		defaultTagLabelPrefix + "bar",
+		defaultTagLabelPrefix + "a",
 	}
 	expectedValues := []string{"", "", ""}
 	testParseTag(t, expectedKeys, expectedValues, keyOnlyTags)
 
 	expectedResults := map[string]string{
-		decorator.TagLabelPrefix + "foo": "",
-		decorator.TagLabelPrefix + "bar": "",
-		decorator.TagLabelPrefix + "a":   "",
+		defaultTagLabelPrefix + "foo": "",
+		defaultTagLabelPrefix + "bar": "",
+		defaultTagLabelPrefix + "a":   "",
 	}
 	testParseTags(t, expectedResults, keyOnlyTags)
 }
@@ -106,17 +108,17 @@ func TestParseKeyOnlyTags(t *testing.T) {
 func TestParseKeyValueTags(t *testing.T) {
 	keyValueTags := []string{"foo=bar", "foo:bar", "a=b", "a:b"}
 	expectedKeys := []string{
-		decorator.TagLabelPrefix + "foo",
-		decorator.TagLabelPrefix + "foo",
-		decorator.TagLabelPrefix + "a",
-		decorator.TagLabelPrefix + "a",
+		defaultTagLabelPrefix + "foo",
+		defaultTagLabelPrefix + "foo",
+		defaultTagLabelPrefix + "a",
+		defaultTagLabelPrefix + "a",
 	}
 	expectedValues := []string{"bar", "bar", "b", "b"}
 	testParseTag(t, expectedKeys, expectedValues, keyValueTags)
 
 	expectedResults := map[string]string{
-		decorator.TagLabelPrefix + "foo": "bar",
-		decorator.TagLabelPrefix + "a":   "b",
+		defaultTagLabelPrefix + "foo": "bar",
+		defaultTagLabelPrefix + "a":   "b",
 	}
 	testParseTags(t, expectedResults, keyValueTags)
 }
@@ -126,20 +128,43 @@ func TestOutOfOrderTags(t *testing.T) {
 	tags2 := []string{"foo=bar", "baz=qux", "bar:quux", "foo", "bar"}
 	tags3 := []string{"foo", "foo=bar", "bar:quux", "bar", "baz=qux"}
 
-	parsedTags1 := decorator.ParseTags(tags1)
-	parsedTags2 := decorator.ParseTags(tags2)
-	parsedTags3 := decorator.ParseTags(tags3)
+	parsedTags1 := decorator.ParseTags(tags1, defaultTagLabelPrefix)
+	parsedTags2 := decorator.ParseTags(tags2, defaultTagLabelPrefix)
+	parsedTags3 := decorator.ParseTags(tags3, defaultTagLabelPrefix)
 
 	if !(reflect.DeepEqual(parsedTags1, parsedTags2) && reflect.DeepEqual(parsedTags1, parsedTags3)) {
 		t.Error("Tags parser should return consistent result regardless of order of raw tags")
 	}
 
 	expectedResults := map[string]string{
-		decorator.TagLabelPrefix + "bar": "quux",
-		decorator.TagLabelPrefix + "foo": "bar",
-		decorator.TagLabelPrefix + "baz": "qux",
+		defaultTagLabelPrefix + "bar": "quux",
+		defaultTagLabelPrefix + "foo": "bar",
+		defaultTagLabelPrefix + "baz": "qux",
 	}
 	testParseTags(t, expectedResults, tags1)
 	testParseTags(t, expectedResults, tags2)
 	testParseTags(t, expectedResults, tags3)
+}
+
+func TestIsValidName(t *testing.T) {
+	testCases := []struct {
+		name    string
+		isValid bool
+	}{
+		{"valid-name-123", true},
+		{"InvalidName-1", false},
+		{"invalid_name-2", false},
+		{"inv@lid-name-3", false},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			isValid := decorator.IsValidObjectName(tc.name)
+			if tc.isValid != isValid {
+				t.Errorf("%s validity should be: %v, got: %v", tc.name, tc.isValid, isValid)
+			}
+		})
+	}
 }

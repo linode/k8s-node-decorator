@@ -35,19 +35,20 @@ func (d *Decorator) updateNodeLabels(ctx context.Context, instanceData *metadata
 		}
 	}
 
-	handleUpdated(setLabel(node, "decorator.linode.com/label", instanceData.Label))
-	handleUpdated(setLabel(node, "decorator.linode.com/instance-id", strconv.Itoa(instanceData.ID)))
-	handleUpdated(setLabel(node, "decorator.linode.com/region", instanceData.Region))
-	handleUpdated(setLabel(node, "decorator.linode.com/instance-type", instanceData.Type))
-	handleUpdated(setLabel(node, "decorator.linode.com/host", instanceData.HostUUID))
+	handleUpdated(setLabel(node, d.prefix+"/label", instanceData.Label))
+	handleUpdated(setLabel(node, d.prefix+"/instance-id", strconv.Itoa(instanceData.ID)))
+	handleUpdated(setLabel(node, d.prefix+"/region", instanceData.Region))
+	handleUpdated(setLabel(node, d.prefix+"/instance-type", instanceData.Type))
+	handleUpdated(setLabel(node, d.prefix+"/host", instanceData.HostUUID))
 
 	oldTags := make(map[string]string)
 	maps.Copy(oldTags, node.Labels)
 
-	newTags := ParseTags(instanceData.Tags)
+	tagLabelPrefix := d.tagsPrefix + "." + d.prefix + "/"
+	newTags := ParseTags(instanceData.Tags, tagLabelPrefix)
 
 	for key := range oldTags {
-		if !strings.HasPrefix(key, TagLabelPrefix) {
+		if !strings.HasPrefix(key, tagLabelPrefix) {
 			continue
 		}
 		if _, ok := newTags[key]; !ok {
