@@ -5,3 +5,8 @@ bin/
 .DS_Store
 
 vendor/
+
+e2e/opentofu/.terraform/**
+e2e/opentofu/.terraform.lock.hcl
+e2e/opentofu/terraform.tfstate
+e2e/opentofu/terraform.tfstate.backup
